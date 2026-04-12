@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: tce-sql
+    environment:
+      SA_PASSWORD: "YourStrong!Pass123"
+      ACCEPT_EULA: "Y"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sql_data:/var/opt/mssql
+
+  api:
+    build:
+      context: .
+      dockerfile: src/Tce.Api/Dockerfile
+    container_name: tce-api
+    depends_on:
+      - sqlserver
+    environment:
+      - ASPNETCORE_URLS=http://+:8080
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=TceFinance;User Id=sa;Password=YourStrong!Pass123;TrustServerCertificate=True
+    ports:
+      - "5000:8080"
+
+volumes:
+  sql_data:
