@@ -55,8 +55,19 @@ public static class TransactionEndpoints
         // PATCH
         group.MapPatch("/{id:guid}", async (Guid id, UpdateTransactionDto dto, UpdateTransactionUseCase useCase) =>
         {
-            await useCase.ExecuteAsync(id, dto);
-            return Results.NoContent();
+            try
+            {
+                await useCase.ExecuteAsync(id, dto);
+                return Results.NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Results.BadRequest(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem(ex.ToString());
+            }
         });
 
         // DELETE
@@ -77,22 +88,55 @@ public static class TransactionEndpoints
         // PUT
         group.MapPut("/{id}", async (Guid id, UpdateTransactionDto dto, UpdateTransactionUseCase useCase) =>
         {
-            await useCase.ExecuteAsync(id, dto);
-            return Results.NoContent();
+            try
+            {
+                await useCase.ExecuteAsync(id, dto);
+                return Results.NoContent();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Results.BadRequest(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem(ex.ToString());
+            }
         });
 
         // SUMMARY
-        group.MapGet("/summary", async (string month, ITransactionQueryService query) =>
+        group.MapGet("/summary", async (string month, Guid? categoryId, ITransactionQueryService query) =>
         {
-            var result = await query.GetSummaryAsync(month);
-            return Results.Ok(result);
+            try
+            {
+                var result = await query.GetSummaryAsync(month, categoryId);
+                return Results.Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Results.BadRequest(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem(ex.ToString());
+            }
         });
 
         // CHART
-        group.MapGet("/chart", async (string month, ITransactionQueryService query) =>
+        group.MapGet("/chart", async (string month, Guid? categoryId, ITransactionQueryService query) =>
         {
-            var result = await query.GetChartAsync(month);
-            return Results.Ok(result);
+            try
+            {
+                var result = await query.GetChartAsync(month, categoryId);
+                return Results.Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Results.BadRequest(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem(ex.ToString());
+            }
         });
 
         // HISTORY
@@ -100,6 +144,24 @@ public static class TransactionEndpoints
         {
             var result = await query.GetHistoryAsync(id);
             return Results.Ok(result);
+        });
+
+        // CHART BY CATEGORY
+        group.MapGet("/summary/by-category", async (string month, ITransactionQueryService query) =>
+        {
+            try
+            {
+                var result = await query.GetCategoryBreakdownAsync(month);
+                return Results.Ok(result);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Results.BadRequest(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return Results.Problem(ex.ToString());
+            }
         });
     }
 }

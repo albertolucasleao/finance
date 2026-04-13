@@ -74,14 +74,16 @@ public class TransactionTests
         var newType = 1;
         var newCategoryId = Guid.NewGuid();
         var newData = DateTime.UtcNow.AddDays(1);
+        var newNotes = "Detalhe da transacao";
 
         // Act
-        transaction.Update(newDescription, newAmount, (TransactionType)newType, newCategoryId, newData, TransactionStatus.Confirmed, null);
+        transaction.Update(newDescription, newAmount, (TransactionType)newType, newCategoryId, newData, TransactionStatus.Confirmed, newNotes);
 
         // Assert
         transaction.Description.Should().Be(newDescription);
         transaction.Amount.Should().Be(newAmount);
         transaction.CategoryId.Should().Be(newCategoryId);
+        transaction.Notes.Should().Be(newNotes);
     }
 
     [Fact]

@@ -7,6 +7,8 @@ namespace Tce.Application.UseCases;
 
 public class CreateTransactionUseCase
 {
+    private const int NotesMaxLength = 1000;
+
     private readonly ITransactionRepository _repository;
     private readonly ICategoryRepository _categoryRepository;
     private readonly IUserRepository _userRepository;
@@ -23,6 +25,11 @@ public class CreateTransactionUseCase
 
     public async Task<Guid> ExecuteAsync(CreateTransactionDto dto, CancellationToken ct = default)
     {
+        var normalizedNotes = NormalizeNotes(dto.Notes);
+
+        if (normalizedNotes is not null && normalizedNotes.Length > NotesMaxLength)
+            throw new InvalidOperationException($"Notas devem ter no maximo {NotesMaxLength} caracteres.");
+
         if (!await _categoryRepository.ExistsAsync(dto.CategoryId, ct))
             throw new InvalidOperationException("Categoria não encontrada.");
 
@@ -37,11 +44,19 @@ public class CreateTransactionUseCase
             dto.UserId,
             dto.Date,
             TransactionStatus.Confirmed,
-            dto.Notes
+            normalizedNotes
         );
 
         await _repository.AddAsync(transaction, ct);
 
         return transaction.Id;
+    }
+
+    private static string? NormalizeNotes(string? notes)
+    {
+        if (string.IsNullOrWhiteSpace(notes))
+            return null;
+
+        return notes.Trim();
     }
 }

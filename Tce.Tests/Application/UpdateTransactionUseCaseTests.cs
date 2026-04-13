@@ -35,7 +35,10 @@ public class UpdateTransactionUseCaseTests
         {
             Description = "Updated",
             Amount = 200,
-            CategoryId = Guid.NewGuid()
+            Type = (int)TransactionType.Expense,
+            CategoryId = Guid.NewGuid(),
+            Date = DateTime.UtcNow,
+            Notes = "  nota atualizada  "
         };
 
         // Act
@@ -44,6 +47,8 @@ public class UpdateTransactionUseCaseTests
         // Assert
         transaction.Description.Should().Be(dto.Description);
         transaction.Amount.Should().Be(dto.Amount);
+        transaction.CategoryId.Should().Be(dto.CategoryId);
+        transaction.Notes.Should().Be("nota atualizada");
 
         repositoryMock.Verify(x => x.UpdateAsync(transaction), Times.Once);
     }
@@ -67,5 +72,40 @@ public class UpdateTransactionUseCaseTests
 
         // Assert
         await act.Should().ThrowAsync<Exception>();
+    }
+
+    [Fact]
+    public async Task Should_Throw_InvalidOperationException_When_Updating_With_Notes_Above_Limit()
+    {
+        var repositoryMock = new Mock<ITransactionRepository>();
+
+        var transaction = new Transaction(
+            "Old",
+            100,
+            TransactionType.Income,
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            DateTime.UtcNow
+        );
+
+        repositoryMock
+            .Setup(x => x.GetByIdAsync(It.IsAny<Guid>()))
+            .ReturnsAsync(transaction);
+
+        var useCase = new UpdateTransactionUseCase(repositoryMock.Object);
+
+        var dto = new UpdateTransactionDto
+        {
+            Description = "Updated",
+            Amount = 200,
+            Type = (int)TransactionType.Expense,
+            CategoryId = Guid.NewGuid(),
+            Date = DateTime.UtcNow,
+            Notes = new string('n', 1001)
+        };
+
+        Func<Task> act = async () => await useCase.ExecuteAsync(Guid.NewGuid(), dto);
+
+        await act.Should().ThrowAsync<InvalidOperationException>();
     }
 }

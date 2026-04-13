@@ -1,3 +1,4 @@
+using Tce.Application.DTOs;
 using Tce.Application.Interfaces;
 
 namespace Tce.Application.UseCases;
@@ -11,8 +12,24 @@ public class GetTransactionByIdUseCase
         _repository = repository;
     }
 
-    public async Task<object?> ExecuteAsync(Guid id)
+    public async Task<TransactionDto?> ExecuteAsync(Guid id)
     {
-        return await _repository.GetByIdAsync(id);
+        var transaction = await _repository.GetByIdAsync(id);
+        if (transaction is null) return null;
+
+        return new TransactionDto
+        {
+            Id = transaction.Id,
+            UserId = transaction.UserId,
+            CategoryId = transaction.CategoryId,
+            Description = transaction.Description,
+            Amount = transaction.Amount,
+            Type = (int)transaction.Type,
+            Date = transaction.Date,
+            Status = (int)transaction.Status,
+            Notes = transaction.Notes,
+            CreatedAt = transaction.CreatedAt,
+            UpdatedAt = transaction.UpdatedAt
+        };
     }
 }
